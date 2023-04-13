@@ -1,0 +1,96 @@
+package main
+
+import (
+    "encoding/json"
+    "fmt"
+    "io/ioutil"
+    "log"
+    "os"
+)
+
+// Definimos la estructura del autómata
+type Automata struct {
+    States       []string            `json:"states"`
+    Alphabet     []string            `json:"alphabet"`
+    Transitions  map[string]map[string]string `json:"transitions"`
+    InitialState string              `json:"initial_state"`
+    FinalStates  []string            `json:"final_states"`
+}
+
+// Función para cargar el autómata desde un archivo JSON
+func LoadAutomataFromJSON(filename string) (*Automata, error) {
+    file, err := os.Open(filename)
+    if err != nil {
+        return nil, err
+    }
+    defer file.Close()
+
+    bytes, err := ioutil.ReadAll(file)
+    if err != nil {
+        return nil, err
+    }
+
+    var automata Automata
+    err = json.Unmarshal(bytes, &automata)
+    if err != nil {
+        return nil, err
+    }
+
+    return &automata, nil
+}
+
+// Función para validar una cadena de entrada en el autómata
+func ValidateString(automata *Automata, input string) bool {
+    currentState := automata.InitialState
+
+    for _, symbol := range input {
+        nextState, exists := automata.Transitions[currentState][string(symbol)]
+        if !exists {
+            return false
+        }
+        currentState = nextState
+    }
+
+    for _, finalState := range automata.FinalStates {
+        if currentState == finalState {
+            return true
+        }
+    }
+
+    return false
+}
+
+// Función para completar el autómata si es necesario
+func CompleteAutomata(automata *Automata) {
+    sinkState := "SINK"
+
+    // Agregamos el sumidero si no existe
+    if _, exists := automata.Transitions[sinkState]; !exists {
+        automata.Transitions[sinkState] = make(map[string]string)
+        for _, symbol := range automata.Alphabet {
+            automata.Transitions[sinkState][symbol] = sinkState
+        }
+    }
+
+    // Completamos las transiciones faltantes
+    for _, state := range automata.States {
+        for _, symbol := range automata.Alphabet {
+            if _, exists := automata.Transitions[state][symbol]; !exists {
+                automata.Transitions[state][symbol] = sinkState
+            }
+        }
+    }
+}
+
+func main() {
+    // Cargamos el autómata desde un archivo JSON
+    automata, err := LoadAutomataFromJSON("automata.json")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Completamos el autómata si es necesario
+    CompleteAutomata(automata)
+
+    
+}

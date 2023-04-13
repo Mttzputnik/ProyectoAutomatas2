@@ -1,0 +1,168 @@
+¡Por supuesto! A continuación, te proporcionaré una estructura básica para la aplicación en Go que cumplirá con los requerimientos que has mencionado.
+
+Primero, necesitaremos crear una estructura para nuestro autómata:
+
+go
+Copy code
+type Automata struct {
+    states       []string // Lista de estados
+    alphabet     []string // Lista de símbolos de entrada
+    transitions  map[string]map[string]string // Tabla de transiciones
+    startState   string // Estado inicial
+    finalStates  []string // Lista de estados finales
+}
+Luego, necesitaremos implementar una función para validar si una cadena de entrada pertenece al lenguaje definido por el autómata:
+
+go
+Copy code
+func (a *Automata) ValidateString(input string) bool {
+    currentState := a.startState
+    for _, symbol := range input {
+        nextState, exists := a.transitions[currentState][string(symbol)]
+        if !exists {
+            return false
+        }
+        currentState = nextState
+    }
+    for _, state := range a.finalStates {
+        if currentState == state {
+            return true
+        }
+    }
+    return false
+}
+También necesitaremos una función para cargar el autómata desde un archivo de texto o JSON:
+
+go
+Copy code
+func LoadAutomataFromFile(path string) (*Automata, error) {
+    // Leer archivo
+    file, err := os.Open(path)
+    if err != nil {
+        return nil, err
+    }
+    defer file.Close()
+
+    // Decodificar archivo JSON
+    var automata Automata
+    decoder := json.NewDecoder(file)
+    err = decoder.Decode(&automata)
+    if err != nil {
+        return nil, err
+    }
+
+    // Validar autómata
+    if !automata.IsValid() {
+        return nil, errors.New("el autómata es inválido")
+    }
+
+    return &automata, nil
+}
+Además, implementaremos una función para completar un autómata incompleto agregando un estado sumidero:
+
+go
+Copy code
+func (a *Automata) Complete() {
+    // Agregar estado sumidero
+    a.states = append(a.states, "sumidero")
+    for _, symbol := range a.alphabet {
+        a.transitions["sumidero"] = map[string]string{symbol: "sumidero"}
+    }
+    for _, state := range a.states {
+        for _, symbol := range a.alphabet {
+            _, exists := a.transitions[state][symbol]
+            if !exists {
+                a.transitions[state][symbol] = "sumidero"
+            }
+        }
+    }
+}
+Por último, implementaremos una interfaz gráfica básica utilizando la librería fyne:
+
+go
+Copy code
+func main() {
+    // Crear ventana
+    app := fyne.NewApp()
+    window := app.NewWindow("Validador de Cadenas")
+    window.Resize(fyne.NewSize(400, 300))
+
+    // Crear widgets
+    label := widget.NewLabel("Ingrese una cadena:")
+    input := widget.NewEntry()
+    button := widget.NewButton("Validar", func() {
+        if automata.ValidateString(input.Text) {
+            dialog.ShowInformation("Cadena válida", "La cadena ingresada pertenece al lenguaje.")
+        } else {
+            dialog.ShowInformation("Cadena inválida", "La cadena ingresada no pertenece al lenguaje.")
+        }
+    })
+
+    // Crear layout
+    content := fyne.NewContainerWithLayout(layout.NewVBoxLayout(),
+        label,
+        input,
+        button,
+    )
+
+    //funcion isvalid 
+
+    func (a *Automata) IsValid() bool {
+    // Verificar si el estado inicial está incluido en la lista de estados
+    if !contains(a.States, a.InitialState) {
+        return false
+    }
+
+    // Verificar si todos los estados de la tabla de transiciones están incluidos en la lista de estados
+    for state := range a.Transitions {
+        if !contains(a.States, state) {
+            return false
+        }
+    }
+
+    // Verificar si todos los símbolos de entrada de la tabla de transiciones están incluidos en la lista de símbolos de entrada
+    for _, symbols := range a.Transitions {
+        for symbol := range symbols {
+            if !contains(a.InputSymbols, symbol) {
+                return false
+            }
+        }
+    }
+
+    // Verificar si la tabla de transiciones no tiene estados ni símbolos de entrada duplicados
+    for state, symbols := range a.Transitions {
+        if len(symbols) != len(removeDuplicates(symbols)) {
+            return false
+        }
+        for _, symbol := range symbols {
+            if len(a.Transitions[state][symbol]) != len(removeDuplicates(a.Transitions[state][symbol])) {
+                return false
+            }
+        }
+    }
+
+    return true
+}
+
+// Función auxiliar para verificar si un elemento está en una lista
+func contains(list []string, element string) bool {
+    for _, item := range list {
+        if item == element {
+            return true
+        }
+    }
+    return false
+}
+
+// Función auxiliar para eliminar duplicados de una lista de strings
+func removeDuplicates(list []string) []string {
+    unique := make(map[string]bool)
+    for _, item := range list {
+        unique[item] = true
+    }
+    result := make([]string, 0, len(unique))
+    for item := range unique {
+        result = append(result, item)
+    }
+    return result
+}
