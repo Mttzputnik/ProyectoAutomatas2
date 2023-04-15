@@ -1,4 +1,4 @@
-package automataModelo
+package models
 
 type Automata struct {
     States       []string            `json:"states"`

@@ -7,6 +7,6 @@
         "2": {"a": 3, "b": 0},
         "3": {"a": 3, "b": 3}
     },
-    "start_state": 0,
-    "accept_states": [3]
+    "initial_state": 0,
+    "final_States": [3]
 }
