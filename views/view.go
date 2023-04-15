@@ -1,40 +1,83 @@
 package views
 
-
 import (
-    "fyne.io/fyne/app"
-    "fyne.io/fyne/widget"
-    "fyne.io/fyne/layout"
-    "fyne.io/fyne/dialog"
+	"fmt"
+	"os"
+
+	"ProyectDos/controllers"
 )
 
-func Diseñar() {
-	// Crear ventana
-	app := fyne.NewApp()
-	window := app.NewWindow("Validador de Cadenas")
-	window.Resize(fyne.NewSize(400, 300))
+type View struct {
+	Controller *controllers.Controller
+}
 
-	// Crear widgets
-	label := widget.NewLabel("Ingrese una cadena:")
-	input := widget.NewEntry()
-	button := widget.NewButton("Validar", func() {
-		if automata.ValidateString(input.Text) {
-			dialog.ShowInformation("Cadena válida", "La cadena ingresada pertenece al lenguaje.")
-		} else {
-			dialog.ShowInformation("Cadena inválida", "La cadena ingresada no pertenece al lenguaje.")
+func NewView(controller *controllers.Controller) *View {
+	return &View{controller}
+}
+
+func (v *View) GetInput() {
+	var input string
+	fmt.Println("Ingrese una cadena para verificar:")
+	fmt.Scanln(&input)
+
+	isAccepted, err := v.Controller.CheckString(input)
+	if err != nil {
+		fmt.Println("Error al verificar la cadena:", err)
+	} else if isAccepted {
+		fmt.Println("La cadena", input, "es aceptada por el autómata")
+	} else {
+		fmt.Println("La cadena", input, "no es aceptada por el autómata")
+	}
+
+	
+}
+
+func (v *View) Run() {
+	for {
+		var input string
+		fmt.Println("¿Qué desea hacer?")
+		fmt.Println("1. Cargar autómata desde archivo")
+		fmt.Println("2. Cargar autómata desde entrada manual")
+		fmt.Println("3. Guardar autómata en archivo")
+		fmt.Println("4. Verificar cadena")
+		fmt.Println("5. Salir")
+		fmt.Scanln(&input)
+
+		switch input {
+		case "1":
+			fmt.Println("Ingrese la ruta del archivo:")
+			fmt.Scanln(&input)
+			err := v.Controller.LoadAutomataFromFile(input)
+			if err != nil {
+				fmt.Println("Error al cargar el archivo:", err)
+			} else {
+				fmt.Println("Autómata cargado correctamente")
+			}
+		case "2":
+			fmt.Println("Ingrese el autómata en formato JSON:")
+			fmt.Fscanln(os.Stdin, &input)
+			err := v.Controller.LoadAutomataFromString(input)
+			if err != nil {
+				fmt.Println("Error al cargar el autómata:", err)
+			} else {
+				fmt.Println("Autómata cargado correctamente")
+			}
+		case "3":
+			fmt.Println("Ingrese la ruta del archivo:")
+			fmt.Scanln(&input)
+			err := v.Controller.SaveAutomataToFile(input)
+			if err != nil {
+				fmt.Println("Error al guardar el archivo:", err)
+			} else {
+				fmt.Println("Autómata guardado correctamente")
+			}
+		case "4":
+			v.GetInput()
+		case "5":
+			fmt.Println("Saliendo...")
+			os.Exit(0)
+		default:
+			fmt.Println("Opción inválida")
 		}
-	})
-
-	// Crear layout
-	content := fyne.NewContainerWithLayout(layout.NewVBoxLayout(),
-		label,
-		input,
-		button,
-	)
-
-	// Setear contenido
-	window.setContent(content)
-
-	// Show window and run app
-	window.ShowAndRun()
+	}
 }
